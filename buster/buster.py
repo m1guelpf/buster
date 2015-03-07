@@ -49,6 +49,21 @@ def main():
                    "{0}").format(arguments['--domain'], static_path)
         os.system(command)
 
+        # copy sitemap files since Ghost 0.5.7
+        base_command = "wget --convert-links --page-requisites --no-parent --directory-prefix {1} --no-host-directories --restrict-file-name=unix {0}/{2}"
+        command = base_command.format(arguments['--domain'], static_path, "sitemap.xsl")
+        os.system(command)
+        command = base_command.format(arguments['--domain'], static_path, "sitemap.xml")
+        os.system(command)
+        command = base_command.format(arguments['--domain'], static_path, "sitemap-pages.xml")
+        os.system(command)
+        command = base_command.format(arguments['--domain'], static_path, "sitemap-posts.xml")
+        os.system(command)
+        command = base_command.format(arguments['--domain'], static_path, "sitemap-authors.xml")
+        os.system(command)
+        command = base_command.format(arguments['--domain'], static_path, "sitemap-tags.xml")
+        os.system(command)
+
         # remove query string since Ghost 0.4
         file_regex = re.compile(r'.*?(\?.*)')
         for root, dirs, filenames in os.walk(static_path):
