@@ -98,7 +98,7 @@ def main():
                 parser = 'html'
                 if root.endswith("/rss"):  # rename rss index.html to index.rss
                     parser = 'xml'
-                    newfilepath = os.path.join(root, os.path.splitext(filename)[0] + ".rss")
+                    newfilepath = os.path.join(root, os.path.splitext(filename)[0] + ".html")
                     os.rename(filepath, newfilepath)
                     filepath = newfilepath
                 with open(filepath) as f:
