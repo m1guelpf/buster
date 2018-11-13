@@ -16,7 +16,6 @@ Options:
   --dir=<path>                      Absolute path of directory to store static pages.
   --domain=<local-address>          Address of local ghost installation [default: localhost:2368].
   --gh-repo=<repo-url>              URL of your gh-pages repository.
-  --depth=<recursive-depth>         Depth of wget recursion  [Depth: 5]
   --new-domain=<remote-address>     Address of the remote static web location.
 """
 
@@ -50,8 +49,7 @@ def main():
                    "--directory-prefix {1} "  # download contents to static/ folder
                    "--no-host-directories "   # don't create domain named folder
                    "--restrict-file-name=unix "  # don't escape query string
-                   "--level={2} \\"
-                   "{0}").format(arguments['--domain'], static_path, arguments['--depth'])
+                   "{0}").format(arguments['--domain'], static_path)
         os.system(command)
 
         command = ("wget "
@@ -62,8 +60,7 @@ def main():
                    "--no-host-directories "   # don't create domain named folder
                    "--restrict-file-name=unix "  # don't escape query string
                    "--content-on-error "      # fetch content on 404 error
-                   "--level={2} \\"
-                   "{0}/404.html").format(arguments['--domain'], static_path, arguments['--depth'])
+                   "{0}/404.html").format(arguments['--domain'], static_path)
         os.system(command)
 
         def pullRss(path):
