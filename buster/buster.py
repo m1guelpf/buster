@@ -2,6 +2,7 @@
 
 Usage:
   buster.py setup [--gh-repo=<repo-url>] [--dir=<path>]
+  buster.py setup-clone [--gh-repo=<repo-url>] [--dir=<path>]
   buster.py generate [--domain=<local-address>] [--dir=<path>] [--new-domain=<remote-address>]
   buster.py preview [--dir=<path>]
   buster.py deploy [--dir=<path>]
@@ -15,6 +16,7 @@ Options:
   --dir=<path>                      Absolute path of directory to store static pages.
   --domain=<local-address>          Address of local ghost installation [default: localhost:2368].
   --gh-repo=<repo-url>              URL of your gh-pages repository.
+  --depth=<recursive-depth>         Depth of wget recursion  [Depth: 5]
   --new-domain=<remote-address>     Address of the remote static web location.
 """
 
@@ -48,8 +50,33 @@ def main():
                    "--directory-prefix {1} "  # download contents to static/ folder
                    "--no-host-directories "   # don't create domain named folder
                    "--restrict-file-name=unix "  # don't escape query string
-                   "{0}").format(arguments['--domain'], static_path)
+                   "--level={2} \\"
+                   "{0}").format(arguments['--domain'], static_path, arguments['--depth'])
         os.system(command)
+
+        command = ("wget "
+                   "--convert-links "         # make links relative
+                   "--page-requisites "       # grab everything: css / inlined images
+                   "--no-parent "             # don't go to parent level
+                   "--directory-prefix {1} "  # download contents to static/ folder
+                   "--no-host-directories "   # don't create domain named folder
+                   "--restrict-file-name=unix "  # don't escape query string
+                   "--content-on-error "      # fetch content on 404 error
+                   "--level={2} \\"
+                   "{0}/404.html").format(arguments['--domain'], static_path, arguments['--depth'])
+        os.system(command)
+
+        def pullRss(path):
+            for feed in os.listdir(static_path + "/" + path):
+                rsspath = "/" + path + "/" + feed + "/rss/"
+                rssdir = static_path + rsspath
+                os.mkdir(rssdir)
+                command = ("wget "
+                           "--output-document=" + rssdir + "/index.html "
+                           "{0}" + rsspath).format(arguments['--domain'])
+                os.system(command)
+        pullRss("tag")
+        pullRss("author")
 
         # copy sitemap files since Ghost 0.5.7
         base_command = "wget --convert-links --page-requisites --no-parent --directory-prefix {1} --no-host-directories --restrict-file-name=unix {0}/{2}"
@@ -82,6 +109,10 @@ def main():
             for element in d('a'):
                 e = PyQuery(element)
                 href = e.attr('href')
+
+                if href is None:
+                    continue
+
                 if not abs_url_regex.search(href):
                     new_href = re.sub(r'rss/index\.html$', 'rss/index.rss', href)
                     new_href = re.sub(r'/index\.html$', '/', new_href)
@@ -98,7 +129,7 @@ def main():
                 parser = 'html'
                 if root.endswith("/rss"):  # rename rss index.html to index.rss
                     parser = 'xml'
-                    newfilepath = os.path.join(root, os.path.splitext(filename)[0] + ".html")
+                    newfilepath = os.path.join(root, os.path.splitext(filename)[0] + ".rss")
                     os.rename(filepath, newfilepath)
                     filepath = newfilepath
                 with open(filepath) as f:
@@ -166,6 +197,30 @@ def main():
         with open(file_path, 'w') as f:
             f.write('# Blog\nPowered by [Ghost](http://ghost.org) and [Buster](https://github.com/axitkhurana/buster/).\n')
 
+        print "All set! You can generate and deploy now."
+
+    elif arguments['setup-clone']:
+        if arguments['--gh-repo']:
+            repo_url = arguments['--gh-repo']
+        else:
+            repo_url = raw_input("Enter the Github repository URL:\n").strip()
+         # Create a fresh new static files directory
+        if os.path.isdir(static_path):
+            confirm = raw_input("This will destroy everything inside static/."
+                                " Are you sure you want to continue? (y/N)").strip()
+            if confirm != 'y' and confirm != 'Y':
+                sys.exit(0)
+            shutil.rmtree(static_path)
+         # User/Organization page -> master branch
+        # Project page -> gh-pages branch
+        branch = 'gh-pages'
+        regex = re.compile(".*[\w-]+\.github\.(?:io|com).*")
+        if regex.match(repo_url):
+            branch = 'master'
+         # Prepare git repository
+        repo = Repo.clone_from(repo_url, static_path)
+        git = repo.git
+        # TODO please check if gh-pages vs master works properly here
         print "All set! You can generate and deploy now."
 
     elif arguments['deploy']:
