@@ -63,17 +63,17 @@ def main():
                    "{0}/404.html").format(arguments['--domain'], static_path)
         os.system(command)
 
-        def pullRss(path):
-            for feed in os.listdir(static_path + "/" + path):
-                rsspath = "/" + path + "/" + feed + "/rss/"
-                rssdir = static_path + rsspath
-                os.mkdir(rssdir)
-                command = ("wget "
-                           "--output-document=" + rssdir + "/index.html "
-                           "{0}" + rsspath).format(arguments['--domain'])
-                os.system(command)
-        pullRss("tag")
-        pullRss("author")
+        # def pullRss(path):
+        #     for feed in os.listdir(static_path + "/" + path):
+        #         rsspath = "/" + path + "/" + feed + "/rss/"
+        #         rssdir = static_path + rsspath
+        #         os.mkdir(rssdir)
+        #         command = ("wget "
+        #                    "--output-document=" + rssdir + "/index.html "
+        #                    "{0}" + rsspath).format(arguments['--domain'])
+        #         os.system(command)
+        # pullRss("tag")
+        # pullRss("author")
 
         # copy sitemap files since Ghost 0.5.7
         base_command = "wget --convert-links --page-requisites --no-parent --directory-prefix {1} --no-host-directories --restrict-file-name=unix {0}/{2}"
